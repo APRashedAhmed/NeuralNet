@@ -11,3 +11,5 @@ processing of the data to maximize the NN solution convergence.
 
 Main contains the code that will initializes the NN and the data that
 will be used by it.
+
+

@@ -4,6 +4,7 @@ import random
 import pandas as pd
 import matplotlib.pyplot as plt
 import DataFormatting as df
+from scipy import optimize
 
 #Class for the general neural network with the specified layer sizes
 class Neural_Network(object):
@@ -65,6 +66,28 @@ class Neural_Network(object):
         dJdW1 = np.dot(X.T, delta2)
 
         return dJdW1, dJdW2
+    
+    #Helper functions for interacting with other methods/classes
+    def GetParams(self):
+        #Get W1 and W2 Rolled into vector:
+        params = np.concatenate((self.W1.ravel(), self.W2.ravel()))
+        return params
+    
+    def SetParams(self, params):
+        #Set W1 and W2 using single parameter vector:
+        W1_start = 0
+        W1_end = self.HiddenLayerSize*self.InputLayerSize
+        self.W1 = np.reshape(params[W1_start:W1_end], \
+                             (self.InputLayerSize,
+                              self.HiddenLayerSize))
+        W2_end = W1_end + self.HiddenLayerSize*self.OutputLayerSize
+        self.W2 = np.reshape(params[W1_end:W2_end], \
+                             (self.HiddenLayerSize,
+                              self.OutputLayerSize))
+        
+    def ComputeGradients(self, X, y):
+        dJdW1, dJdW2 = self.CostFunctionPrime(X, y)
+        return np.concatenate((dJdW1.ravel(), dJdW2.ravel()))
 
         
 class Trainer(object):
@@ -98,6 +121,27 @@ class Trainer(object):
                 #The actual weight updating is here
                 self.UpdateWeights(dJdW1, dJdW2)
 
+
+    def CostFunctionWrapper(self, params, X, y):
+        self.NN.SetParams(params)
+        cost = self.NN.CostFunction(X, y)
+        grad = self.NN.ComputeGradients(X,y)
+        
+        return cost, grad
+        
+    def BFGS(self, iterations = 1000):
+        params0 = self.NN.GetParams()
+
+        options = {'maxiter': iterations, 'disp' : False}
+        _res = optimize.minimize(self.CostFunctionWrapper, params0,
+                                 jac=True, method='BFGS',
+                                 args=(self.X, self.y),
+                                 options=options)
+
+        self.NN.SetParams(_res.x)
+        self.optimizationResults = _res
+
+    # This does not work as of now
     def BatchLearning(self, iterations):
         dJdW1 = np.array(self.NN.InputLayerSize,
                          self.NN.HiddenLayerSize)

@@ -82,7 +82,7 @@ Error0 = AverageError(MyNeuralNet, TestingX, TestingY)
 print "Error before training:"
 print Error0
 
-MyTrainer.StochasticLearning(1)
+MyTrainer.BFGS()
 
 Errorf = AverageError(MyNeuralNet, TestingX, TestingY)
 print "Error after training:"
